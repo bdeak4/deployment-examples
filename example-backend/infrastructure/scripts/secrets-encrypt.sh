@@ -8,6 +8,11 @@ if [ -z "$env" ] || [ ! -f "$ssh_key" ]; then
   exit 1
 fi
 
+if ! command -v ansible-vault >/dev/null 2>&1; then
+  echo "ansible-vault is required but not installed" >&2
+  exit 1
+fi
+
 cd -P -- "$(dirname -- "$0")"
 cd ..
 
