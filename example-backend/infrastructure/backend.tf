@@ -1,4 +1,4 @@
-variable "ssh_public_key" {
+variable "backend_domain" {
   type     = string
   nullable = false
 }
@@ -15,6 +15,11 @@ variable "backend_instance_disk_gb" {
 
 variable "backend_instance_count" {
   type     = number
+  nullable = false
+}
+
+variable "backend_instance_ssh_public_key" {
+  type     = string
   nullable = false
 }
 
@@ -37,7 +42,7 @@ resource "aws_instance" "backend" {
   ami             = data.aws_ami.debian.id
   instance_type   = var.backend_instance_type
   key_name        = aws_key_pair.backend.key_name
-  security_groups = [aws_security_group.backend.name]
+  security_groups = [aws_security_group.backend_instance.id]
   count           = var.backend_instance_count
 
   root_block_device {
@@ -53,10 +58,10 @@ resource "aws_instance" "backend" {
 
 resource "aws_key_pair" "backend" {
   key_name   = "${var.project}-ssh-key-${var.env}"
-  public_key = var.ssh_public_key
+  public_key = var.backend_instance_ssh_public_key
 }
 
-resource "aws_security_group" "backend" {
+resource "aws_security_group" "backend_instance" {
   ingress {
     from_port   = 22
     to_port     = 22
