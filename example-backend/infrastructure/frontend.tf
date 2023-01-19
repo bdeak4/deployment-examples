@@ -3,11 +3,6 @@ variable "frontend_domain" {
   nullable = false
 }
 
-variable "frontend_certificate" {
-  type     = string
-  nullable = false
-}
-
 resource "aws_s3_bucket" "frontend" {
   bucket        = "${var.project}-frontend-${var.env}"
   force_destroy = true
@@ -79,8 +74,7 @@ resource "aws_cloudfront_distribution" "frontend" {
   }
 
   viewer_certificate {
-    acm_certificate_arn = var.frontend_certificate
-    ssl_support_method  = "sni-only"
+    cloudfront_default_certificate = true
   }
 
   restrictions {
