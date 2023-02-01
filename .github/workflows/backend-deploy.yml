@@ -1,4 +1,4 @@
-name: hello-world
+name: Backend Deploy
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - dev
 
 jobs:
-  my-job:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: my-step
