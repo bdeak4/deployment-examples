@@ -42,7 +42,7 @@ resource "aws_instance" "backend" {
   ami             = data.aws_ami.debian.id
   instance_type   = var.backend_instance_type
   key_name        = aws_key_pair.backend.key_name
-  security_groups = [aws_security_group.backend_instance.id]
+  security_groups = [aws_security_group.backend_instance.name]
   count           = var.backend_instance_count
 
   root_block_device {
@@ -89,4 +89,13 @@ resource "aws_security_group" "backend_instance" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+}
+
+resource "cloudflare_record" "backend" {
+  zone_id         = var.zone_id
+  name            = var.backend_domain
+  value           = aws_instance.backend[0].public_ip
+  type            = "A"
+  proxied         = true
+  allow_overwrite = true
 }

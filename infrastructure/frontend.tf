@@ -74,7 +74,8 @@ resource "aws_cloudfront_distribution" "frontend" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn = aws_acm_certificate.frontend.arn
+    ssl_support_method  = "sni-only"
   }
 
   restrictions {
@@ -84,4 +85,43 @@ resource "aws_cloudfront_distribution" "frontend" {
   }
 }
 
-resource "aws_cloudfront_origin_access_identity" "frontend" {}
+resource "aws_cloudfront_origin_access_identity" "frontend" {
+}
+
+resource "cloudflare_record" "frontend" {
+  zone_id         = var.zone_id
+  name            = var.frontend_domain
+  value           = aws_cloudfront_distribution.frontend.domain_name
+  type            = "CNAME"
+  proxied         = true
+  allow_overwrite = true
+}
+
+resource "aws_acm_certificate" "frontend" {
+  domain_name       = var.frontend_domain
+  validation_method = "DNS"
+  provider          = aws.force_us_east
+}
+
+resource "aws_acm_certificate_validation" "frontend" {
+  certificate_arn         = aws_acm_certificate.frontend.arn
+  validation_record_fqdns = [for record in cloudflare_record.frontend_certificate_validation : record.hostname]
+  provider                = aws.force_us_east
+}
+
+resource "cloudflare_record" "frontend_certificate_validation" {
+  for_each = {
+    for v in aws_acm_certificate.frontend.domain_validation_options : v.domain_name => {
+      name   = v.resource_record_name
+      record = v.resource_record_value
+      type   = v.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  value           = each.value.record
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = var.zone_id
+}
