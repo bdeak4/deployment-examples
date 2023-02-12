@@ -1,5 +1,7 @@
 #!/bin/sh
 
+files="secrets.env secrets.vars.yml"
+
 env="$1"
 ssh_key="$2"
 
@@ -15,8 +17,6 @@ fi
 
 cd -P -- "$(dirname -- "$0")"
 cd ..
-
-files="secrets.env secrets.yml"
 
 for file in $files; do
   PRE=$(ansible-vault view --vault-pass-file "$ssh_key" "./env/$env/$file.enc")
