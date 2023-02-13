@@ -1,7 +1,7 @@
 project = "example"
 env = "dev"
 region = "eu-central-1"
-zone_id = ""
+zone_id = "46f98b3965e22801a671adb995316bc6"
 
 # backend
 backend_domain = "apiexample-dev.bdeak.net"

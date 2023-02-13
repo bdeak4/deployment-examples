@@ -1,7 +1,5 @@
 #!/bin/sh
 
-files="secrets.env secrets.vars.yml"
-
 env="$1"
 ssh_key="$2"
 
@@ -18,8 +16,8 @@ fi
 cd -P -- "$(dirname -- "$0")"
 cd ..
 
-for file in $files; do
+for file in $(grep -rl "\$ANSIBLE_VAULT" "./env/$env"); do
   echo "Decrypting $file"
-  cp "./env/$env/$file"{,.enc}
-  ansible-vault decrypt --vault-pass-file "$ssh_key" "./env/$env/$file"
+  cp "$file"{,.enc}
+  ansible-vault decrypt --vault-pass-file "$ssh_key" "$file"
 done

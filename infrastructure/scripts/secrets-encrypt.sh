@@ -1,7 +1,5 @@
 #!/bin/sh
 
-files="secrets.env secrets.vars.yml"
-
 env="$1"
 ssh_key="$2"
 
@@ -18,16 +16,16 @@ fi
 cd -P -- "$(dirname -- "$0")"
 cd ..
 
-for file in $files; do
-  PRE=$(ansible-vault view --vault-pass-file "$ssh_key" "./env/$env/$file.enc")
-  POST=$(cat "./env/$env/$file")
+for file in $(grep -rl " ANSIBLE_VAULT" "./env/$env"); do
+  PRE=$(ansible-vault view --vault-pass-file "$ssh_key" "$file.enc")
+  POST=$(cat "$file")
 
   if [ "$PRE" == "$POST" ]; then
     echo "Restoring unchanged $file"
-    mv -f "./env/$env/$file"{.enc,}
+    mv -f "$file"{.enc,}
   else
     echo "Encrypting $file"
-    ansible-vault encrypt --vault-pass-file "$ssh_key" "./env/$env/$file"
-    rm "./env/$env/$file.enc"
+    ansible-vault encrypt --vault-pass-file "$ssh_key" "$file"
+    rm "$file.enc"
   fi
 done

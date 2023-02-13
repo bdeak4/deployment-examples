@@ -1,13 +1,54 @@
-name: Frontend Deploy
+name: Frontend deploy
 
 on:
   push:
     branches:
       - dev
+      - main
 
 jobs:
   deploy:
+    name: Deploy frontend
     runs-on: ubuntu-latest
+
     steps:
-      - name: my-step
-        run: echo "Hello World!"
+      - uses: actions/checkout@v3
+
+      - name: Set environment name
+        run: echo "ENV=$(echo ${GITHUB_REF#refs/heads/} | sed 's/main/production/')" >> $GITHUB_ENV
+
+      - name: Set environment
+        run: |
+          cp infrastructure/env/$ENV/frontend-config.env .env
+          cat infrastructure/env/$ENV/frontend-config.env | grep -v "^$" |  grep -v '^#' >> $GITHUB_ENV
+
+      - name: Set S3 bucket name
+        run: echo "BUCKET=$PROJECT-frontend-$ENV" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} # secret
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # secret
+          aws-region: ${{ env.DEPLOY_AWS_REGION }}
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 18.x
+          cache: "npm"
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build app
+        run: yarn build
+
+      - name: Copy files to S3
+        run: aws s3 sync build/ s3://$BUCKET
+
+      - name: Invalidate CloudFront cache
+        run: |
+          id=$(aws cloudfront list-distributions | jq -r ".DistributionList.Items[]|select(.Comment==\"$BUCKET\").Id")
+          aws cloudfront create-invalidation --distribution-id $id --paths "/*"
+        env:
+          AWS_MAX_ATTEMPTS: 10

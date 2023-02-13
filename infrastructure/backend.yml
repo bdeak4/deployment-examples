@@ -17,7 +17,7 @@
 
     - name: Reboot server
       ansible.builtin.reboot:
-        msg: 'Reboot initiated by Ansible due to kernel updates'
+        msg: "Reboot initiated by Ansible due to kernel updates"
         connect_timeout: 5
         reboot_timeout: 300
         pre_reboot_delay: 0
@@ -43,12 +43,12 @@
 
     - name: Add signing key
       ansible.builtin.apt_key:
-        url: 'https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg'
+        url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
         state: present
 
     - name: Add repository into sources list
       ansible.builtin.apt_repository:
-        repo: 'deb [arch={{ deb_arch }}] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable'
+        repo: "deb [arch={{ deb_arch }}] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
         state: present
         filename: docker
 
@@ -65,8 +65,8 @@
     - name: Login to ghcr.io
       community.docker.docker_login:
         registry: ghcr.io
-        username: '{{ ghcr_username }}'
-        password: '{{ ghcr_password }}'
+        username: "{{ ghcr_username }}"
+        password: "{{ ghcr_password }}"
 
 - name: Setup nginx
   hosts: all
@@ -80,21 +80,21 @@
 
     - name: Copy ssl certificate file
       ansible.builtin.copy:
-        src: '{{ ssl_crt_file }}'
-        dest: '/etc/ssl/{{ backend_domain }}.crt'
-        mode: '644'
+        src: "./env/{{ env }}/cloudflare-origin.crt"
+        dest: "/etc/ssl/{{ backend_domain }}.crt"
+        mode: "644"
 
     - name: Copy ssl private key file
       ansible.builtin.copy:
-        src: '{{ ssl_key_file }}'
-        dest: '/etc/ssl/{{ backend_domain }}.key'
-        mode: '644'
+        src: "./env/{{ env }}/cloudflare-origin.key"
+        dest: "/etc/ssl/{{ backend_domain }}.key"
+        mode: "644"
 
     - name: Copy nginx conf
       ansible.builtin.template:
         src: site.conf.j2
         dest: /etc/nginx/sites-enabled/{{ backend_domain }}
-        mode: '0644'
+        mode: "0644"
       notify: Restart nginx
 
   handlers:
@@ -118,15 +118,15 @@
 
     - name: Copy config.env file
       ansible.builtin.copy:
-        src: '{{ env_config_file }}'
-        dest: '/home/{{ ansible_user }}/config.env'
-        mode: '644'
+        src: "./env/{{ env }}/backend-config.env"
+        dest: "/home/{{ ansible_user }}/config.env"
+        mode: "644"
 
     - name: Copy secrets.env file
       ansible.builtin.copy:
-        src: '{{ env_secrets_file }}'
-        dest: '/home/{{ ansible_user }}/secrets.env'
-        mode: '644'
+        src: "./env/{{ env }}/backend-secrets.env"
+        dest: "/home/{{ ansible_user }}/secrets.env"
+        mode: "644"
 
     - name: Concat files
       ansible.builtin.shell: |
@@ -144,14 +144,15 @@
       community.docker.docker_container:
         name: backend
         pull: true
-        image: '{{ docker_image }}'
+        image: "{{ docker_image }}"
         restart_policy: on-failure
         restart_retries: 10
         network_mode: host
-        env_file: '/home/{{ ansible_user }}/.env'
+        env_file: "/home/{{ ansible_user }}/.env"
 
     - name: Prune old backend docker images
       ansible.builtin.shell: |
+        set -o pipefail
         if [ $(docker images -q "$(echo "{{ docker_image }}" | cut -d: -f1)" | tail -n +4 | wc -c) -ne 0 ]; then
           docker rmi -f $(docker images -q "$(echo "{{ docker_image }}" | cut -d: -f1)" | tail -n +4)
         fi
