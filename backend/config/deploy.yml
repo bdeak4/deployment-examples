@@ -1,0 +1,46 @@
+service: example-backend
+
+image: bdeak4/example-backend
+
+servers:
+  - 128.140.7.180
+
+registry:
+  server: ghcr.io
+  username: bdeak4
+  password:
+    - MRSK_REGISTRY_PASSWORD
+
+env:
+  clear:
+    DB_HOST: 128.140.7.180
+  secret:
+    - MESSAGE
+
+audit_broadcast_cmd: config/audit_broadcast.sh
+
+accessories:
+  db:
+    image: postgres:15
+    host: 128.140.7.180
+    port: 5432
+    env:
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
+  redis:
+    image: redis:7
+    host: 128.140.7.180
+    port: 6379
+    directories:
+      - data:/data
+
+traefik:
+  args:
+    accesslog: true
+    accesslog.format: json
+
+healthcheck:
+  path: /up
+  port: 3000
