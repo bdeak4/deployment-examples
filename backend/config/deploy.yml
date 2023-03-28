@@ -1,9 +1,14 @@
 service: example-backend
-
 image: bdeak4/example-backend
 
 servers:
-  - 128.140.7.180
+  web:
+    - 128.140.7.180
+  cron:
+    hosts:
+      - 128.140.7.180
+    cmd:
+      bash -c "cat config/crontab | crontab - && cron -f"
 
 registry:
   server: ghcr.io
@@ -17,7 +22,8 @@ env:
   secret:
     - MESSAGE
 
-audit_broadcast_cmd: config/audit_broadcast.sh
+audit_broadcast_cmd:
+  config/audit_broadcast.sh
 
 accessories:
   db:
