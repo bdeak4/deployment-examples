@@ -9,4 +9,10 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
+  @Get('cron')
+  cron(): string {
+    console.log('cron job is running', new Date());
+    return 'success';
+  }
 }
