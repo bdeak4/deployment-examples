@@ -1,1 +1,0 @@
-* * * * * curl -XPOST -d "{ text: \"*[cronjob]* $(date)\" }" "$AUDIT_BROADCAST_WEBHOOK"

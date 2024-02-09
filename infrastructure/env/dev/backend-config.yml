@@ -1,8 +1,0 @@
----
-env: dev
-ansible_ssh_user: admin
-deb_arch: amd64
-
-backend_domain: apiexample-dev.bdeak.net
-docker_image: ghcr.io/bdeak4/example-backend:dev
-container_port: 3000
